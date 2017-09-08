@@ -120,6 +120,18 @@ void AliTreeTrending::AddUserDescription(TNamed * description){
   fUserDescription->AddLast(description);
 }
 
+/// Intialize drawing for <detector> QA
+
+///  \param statusDescription       - contains statusbar-vars,-names and -criteria
+///  \param descriptionSize         - Text size of description
+///  \param cutString               - string "selection"
+
+/// Example usage 
+/// \code
+/// Example usage of the AliTreeTrending::InitSummaryTrending
+/// trendingDraw->InitSummaryTrending(statusString,0.015,"defaultcut")
+/// here "defaultcut" refers to an alias set like this:   treeMC->SetAlias("defaultcut","run==TPC.Anchor.run");
+/// \endcode  
 
 Bool_t  AliTreeTrending::InitSummaryTrending(TString statusDescription[3], Float_t descriptionSize, TString cutString){
   //
@@ -190,7 +202,6 @@ Bool_t  AliTreeTrending::InitSummaryTrending(TString statusDescription[3], Float
     }
     else{
         AliError("TStatToolkit::MakeStatusMultGr() returned with error -> next");
-//        return 0;
         continue;
     }
   }
