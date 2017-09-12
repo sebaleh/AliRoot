@@ -14,9 +14,15 @@
  **************************************************************************/
 
 
-/*
- .L $ALICE_ROOT/../src/STAT/AliTreeTrending.cxx+
 
+///\ingroup STAT
+///\class AliTreeTrending
+///\brief AliTreeTrending class for the visualization of the QA trending/alarms
+///\author Marian Ivanov
+/*!
+ Generalization of the original TPC QA trending visualization code
+ Example usage in the $AliPhysics_SRC/PWGPP/QA
+ Related JIRA task - https://alice.its.cern.ch/jira/browse/ATO-361
 */
 
 #include "TStatToolkit.h"
@@ -134,6 +140,15 @@ void AliTreeTrending::AddUserDescription(TNamed * description){
 /// \endcode  
 
 Bool_t  AliTreeTrending::InitSummaryTrending(TString statusDescription[3], Float_t descriptionSize, TString cutString){
+<<<<<<< HEAD
+=======
+  //
+  // Init drawing for the <detector> QA
+  // Detector specific qaConfig() has to be called before invoking this function
+  //    0.) Make descriptor 
+  //    1.) Make default canvas - addopt canvas width to the number of entries to draw
+  //    3.) compute detector  status graphs
+>>>>>>> master
 
   if (fTree==NULL) {
     AliError("Input tree not defined");
