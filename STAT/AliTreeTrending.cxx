@@ -134,16 +134,7 @@ void AliTreeTrending::AddUserDescription(TNamed * description){
 /// \endcode  
 
 Bool_t  AliTreeTrending::InitSummaryTrending(TString statusDescription[3], Float_t descriptionSize, TString cutString){
-  //
-  // Init drawing for the <detector> QA
-  // Detector specific qaConfig() has to be called before invoking this function
-  //    0.) Make descriptor 
-  //    1.) Make default canvas - addopt canvas width to the number of entries to draw
-  //    3.) compute detector  status graphs
 
-  //
-  //   0.) Make descriptor 
-  //
   if (fTree==NULL) {
     AliError("Input tree not defined");
     return 0;
