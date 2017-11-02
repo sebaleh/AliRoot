@@ -55,6 +55,7 @@
 #include <TF3.h>
 #include <TDatabasePDG.h>
 #include <TParticlePDG.h>
+#include "TPDGCode.h"
 
 #include "AliRun.h"
 #include "AliLog.h"
@@ -154,6 +155,9 @@ void AliGenPerformance::Generate() {
     Int_t naccepted =0;
     Int_t njets=gRandom->Poisson(fNJets);
     TDatabasePDG *databasePDG = TDatabasePDG::Instance();
+    const Int_t nGeant=14;
+    Int_t geantPartiles[nGeant]={kElectron,kPositron, kMuonMinus, kMuonPlus, kKMinus, kKPlus,kPiPlus,kPiMinus,kProton, kProtonBar,
+                                 kK0Short, kK0Long, kLambda0,kLambda0Bar};
 
     for (Int_t iparton=0; iparton<njets; iparton++){
         //
@@ -226,6 +230,7 @@ void AliGenPerformance::Generate() {
         Int_t nParticles=array->GetEntries();
         //array->Print();
         Int_t pLabel  [nParticles];
+        Int_t isGeantFlag[nParticles];   // indicator particle track by GEANT
         for (Int_t iparticle=0; iparticle<nParticles;  iparticle++) {
             TMCParticle *mcParticle = (TMCParticle *) array->At(iparticle);
             Int_t flavour = mcParticle->GetKF();
@@ -246,9 +251,16 @@ void AliGenPerformance::Generate() {
                 decayFlag = 1;
                 pythiaParent = -1;
             }
-            Int_t stackParent = (pythiaParent > 0 && pythiaParent < nParticles) ? pLabel[pythiaParent] : -1;
-            //
+            Int_t stackParent = -1;
             Bool_t isOK = kTRUE;
+            if (pythiaParent > 0 && pythiaParent < nParticles) {
+              stackParent = pLabel[pythiaParent];
+              if (isGeantFlag[pythiaParent]) {
+                isGeantFlag[iparticle] = kTRUE;
+              }
+            }
+            //
+
             if (mcParticle->GetEnergy() < mcParticle->GetMass()) {
                 if (fVerboseLevel > 0) {
                     ::Error("AliGenPerformance::Generate", "Unphysical particle %d", flavour);
@@ -261,31 +273,35 @@ void AliGenPerformance::Generate() {
                 }
                 isOK = kFALSE;
             }
-            Int_t done = (mcParticle->GetFirstChild() <= 0);
+            Int_t done = (mcParticle->GetFirstChild() >= 0);  // indicator particle was decayed using Pythia -sign it done
 
             if ((fVerboseLevel & kFastOnly) == 0 && pdgParticle != NULL) {
-                // Missing info in order to apply reweighting
-                // 1.) validate mother/daughter relationship
-                // 2.) validate position distribution (like in AliGenCorrHF::LoadTracks)
-                // Note : code fr the mother/daughter inspired by the  AliGenCorrHF::LoadTracks
-                TMCProcess type = (stackParent >= 0) ? kPDecay : kPPrimary;
-                if (isOK) {
-                    if (TMath::Abs(flavour) == 211) done = 0; // TEMPORARY hack to get geant to track pion, kaon protons
-                    if (TMath::Abs(flavour) == 321) done = 0;
-                    if (TMath::Abs(flavour) == 2212) done = 0;
-                    if (TMath::Abs(flavour) == 11) done = 0;
-                    if (TMath::Abs(flavour) == 13) done = 0;
-                    PushTrack(done, stackParent, flavour, mom, posf, polarization, 0, type, nPart, 1., decayFlag);
+              // Missing info in order to apply reweighting
+              // 1.) validate mother/daughter relationship
+              // 2.) validate position distribution (like in AliGenCorrHF::LoadTracks)
+              // Note : code fr the mother/daughter inspired by the  AliGenCorrHF::LoadTracks
+              TMCProcess type = (stackParent >= 0) ? kPDecay : kPPrimary;
+              if (isOK) {
+                if (isGeantFlag[iparticle] == kFALSE) {
+                  Float_t isGeant = 0;
+                  for (Int_t i = 0; i < nGeant; i++) if (flavour == geantPartiles[i]) isGeant = 1;
+                  isGeantFlag[iparticle] = isGeant;
+                  if (isGeant) {
+                    PushTrack(0, stackParent, flavour, mom, posf, polarization, 0, type, nPart, 1., decayFlag);
+                    KeepTrack(nPart);
+                    SetHighWaterMark(nPart);
                     pLabel[iparticle] = nPart;
-                    if (done) {
-                        KeepTrack(nPart);
-                        SetHighWaterMark(nPart);
-                    }
+                  } else {
+                    PushTrack(1, stackParent, flavour, mom, posf, polarization, 0, type, nPart, 1., decayFlag);
+                    KeepTrack(nPart);
+                    SetHighWaterMark(nPart);
                     if (stackParent > 0) {
-                        if (databasePDG->GetParticle(stackParent) != NULL) KeepTrack(stackParent);
+                      if (databasePDG->GetParticle(stackParent) != NULL) KeepTrack(stackParent);
                     }
+                  }
                 }
                 //fNprimaries++;
+              }
             }
             if (fStreamer){
                 if (pdgParticle){
