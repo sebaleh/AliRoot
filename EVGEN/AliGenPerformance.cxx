@@ -191,11 +191,17 @@ void AliGenPerformance::Generate() {
     mom[0] = pt * TMath::Cos(phi);
     mom[1] = pt * TMath::Sin(phi);
     mom[2] = ptot * TMath::Cos(theta);
+    //Set vertex
     pos[0] = fOrigin[0];
     pos[1] = fOrigin[1];
     pos[2] = fOrigin[2];
     //
-    if (fFPosition) fFPosition->GetRandom3(pos[0], pos[1], pos[2]); // ???? should be taken from "primary" coctail
+    if (fFPosition) { // use parameterization if specified
+      fFPosition->GetRandom3(pos[0], pos[1], pos[2]);
+    }else{  /// use external vertex
+      Vertex();
+      for (j=0; j < 3; j++) pos[j] = fVertex[j];
+    }
     //
     posf[0] = pos[0];
     posf[1] = pos[1];
