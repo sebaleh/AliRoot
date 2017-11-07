@@ -35,10 +35,7 @@ void AliDrawStyleTest_Attributes();
 void AliDrawStyleTest_GetIntValues();
 void AliDrawStyleTest_GetFloatValues();
 //  void AliDrawStyleTest_CSSReadWrite();
-void AliDrawStyleTest_IsSelected();
 void AliDrawStyleTest_GetProperty();
-void AliDrawStyleTest_GetSelector();
-// void AliDrawStyleTest_CountObjects();
 // void AliDrawStyleTest_TGraphApplyStyle();
 // void AliDrawStyleTest_TH1ApplyStyle();
 // void AliDrawStyleTest_TF1ApplyStyle();
@@ -52,10 +49,7 @@ void AliDrawStyleTest(){
   AliDrawStyleTest_GetIntValues();
   AliDrawStyleTest_GetFloatValues();
   //  AliDrawStyleTest_CSSReadWrite();
-  AliDrawStyleTest_IsSelected();
   AliDrawStyleTest_GetProperty();
-  AliDrawStyleTest_GetSelector();
-  // AliDrawStyleTest_CountObjects();
   // AliDrawStyleTest_TGraphApplyStyle();
   // AliDrawStyleTest_TH1ApplyStyle();
   // AliDrawStyleTest_TF1ApplyStyle();
@@ -201,54 +195,31 @@ void AliDrawStyleTest_GetFloatValues(){
 ///          - diff between the files should be 0 except of the formatting
 /// TODO test - ignoring commented fields in selector and in the declaration
 // void AliDrawStyleTest_CSSReadWrite(){
-//   //TObjArray *cssArray = AliDrawStyle::ReadCSSFile("$AliRoot_SRC/STAT/test/alirootTestStyle.css");
-// TObjArray *cssArray = AliDrawStyle::ReadCSSFile("/Users/bdrum/Projects/alicesw/AliRoot/STAT/test/alirootTestStyle.css");
-//   AliDrawStyle::WriteCSSFile(cssArray,"test.css");
-//   TString diff = gSystem->GetFromPipe("diff -w -B    test.css  $AliRoot_SRC/STAT/test/alirootTestStyle.css");
-//   if (diff.Length()>0){
-//     ::Error("AliDrawStyleTest","AliDrawStyleTestStyle_CSSReadWrite- FAILED");
-//   }else{
-//     ::Info("AliDrawStyleTest","AliDrawStyleTestStyle_CSSReadWrite- ");
+//
+//   if (gSystem->GetFromPipe(TString("[ -f ") + TString("$AliRoot_SRC/STAT/test/alirootTestStyle.css") +  TString(" ] && echo 1 || echo 0")) == "0") {
+//     std::cout << "File doesn't exist1" << std::endl;
+//     ::Info("AliDrawStyleTest","AliDrawStyleTest_CSSReadWrite()- FAILED");
+//     return;
 //   }
+//   TObjArray *cssArray = AliDrawStyle::ReadCSSFile("$AliRoot_SRC/STAT/test/alirootTestStyle.css",0);
+//   if (cssArray == NULL) {
+//     std::cout << "null-pointer error" << std::endl;
+//     ::Info("AliDrawStyleTest","AliDrawStyleTest_CSSReadWrite()- FAILED");
+//     return;
+//   }
+//   AliDrawStyle::WriteCSSFilecssArray,"$AliRoot_SRC/STAT/test/test.css");
+//   TObjArray *cssArrayFromTest = AliDrawStyle::ReadCSSFile("$AliRoot_SRC/STAT/test/test.css",0);
+//   //AliDrawStyle::WriteCSSFile
+//   //AliDrawStyle::WriteCSSFile
+//
+//   for (Int_t i = 0; i < cssArray->GetEntriesFast(); i++){
+//     if ((TString(cssArray->At(i)->GetName()).ReplaceAll("\n", "") == TString(cssArrayFromTest->At(i)->GetName()).ReplaceAll("\n", "")) && TString(cssArray->At(i)->GetTitle()).ReplaceAll("\n", "") == TString(cssArrayFromTest->At(i)->GetTitle()).ReplaceAll("\n", "")) ::Info("AliDrawStyleTest","AliDrawStyleTest_CSSReadWrite()- ");
+//     else ::Info("AliDrawStyleTest","AliDrawStyleTest_CSSReadWrite()- FAILED");
+//
+//   }
+//   gSystem->GetFromPipe("rm -f $AliRoot_SRC/STAT/test/test.css");
+//
 // }
-/// TODO - add test for IsSelected @done
-/// Add benchmark of is selected (timer, loop, print) @done if I get you right.
-/// What time do we need?
-/// Now we have
-/// bench(100) = 0.001079.s || bench(1000) = 0.01162.s || bench(10000) == 0.06675.s bench(100000) = 0.6101.s
-/// \param selector
-/// \param className
-/// \param attributeName
-/// \return
-void  AliDrawStyleTest_IsSelected(){//TString selector, TString className, TString attributeName){
-  TString selectors = "TH1.Status#obj1, TH1.Warning#obj1, TH1.Warning#obj3 \tTGraph#obj1, TGraph.Status#TPC.QA.dcar_posA_1 \tTGraph.Warning#TPC.QA.dcar_posA_2 \tTF1.Status, .Status#obj1, #obj3";
-  std::cout << selectors << std::endl;
-  if (AliDrawStyle::IsSelected(selectors, "TF1", "Status", "anyObject")){
-    ::Info("AliDrawStyleTest","AliDrawStyle::IsSelected(selectors, \"TF1\", \"Status\", \"anyObject\")- IsOK");
-  }else{
-    ::Error("AliDrawStyleTest","AliDrawStyle::IsSelected(selectors, \"TF1\", \"Status\", \"anyObject\")- FAILED");
-  }
-  if (AliDrawStyle::IsSelected(selectors, "TGraphErrors", "AnyTag", "obj3")){
-    ::Info("AliDrawStyleTest","AliDrawStyle::IsSelected(selectors, \"TGraphErrors\", \"AnyTag\", \"obj3\")- IsOK");
-  }else{
-    ::Error("AliDrawStyleTest","AliDrawStyle::IsSelected(selectors, \"TGraphErrors\", \"AnyTag\", \"obj3\")- FAILED");
-  }
-  if (AliDrawStyle::IsSelected(selectors, "TGraph", "Warning", "TPC.QA.dcar_posA_2")){
-    ::Info("AliDrawStyleTest","AliDrawStyle::IsSelected(selectors, \"TGraph\", \"Warning\", \"TPC.QA.dcar_posA_2\")- IsOK");
-  }else{
-    ::Error("AliDrawStyleTest","AliDrawStyle::IsSelected(selectors, \"TGraph\", \"Warning\", \"TPC.QA.dcar_posA_2\")- FAILED");
-  }
-  if (!AliDrawStyle::IsSelected(selectors, "TH1", "Status", "obj2")){
-    ::Info("AliDrawStyleTest","!AliDrawStyle::IsSelected(selectors, \"TH1\", \"Status\", \"obj2\")- IsOK");
-  }else{
-    ::Error("AliDrawStyleTest","!AliDrawStyle::IsSelected(selectors, \"TH1\", \"Status\", \"obj2\")- FAILED");
-  }
-  if (!AliDrawStyle::IsSelected(selectors, "Graph", "Warning", "obj1")){
-    ::Info("AliDrawStyleTest","!AliDrawStyle::IsSelected(selectors, \"Graph\", \"Warning\", \"obj1\")- IsOK");
-  }else{
-    ::Error("AliDrawStyleTest","!AliDrawStyle::IsSelected(selectors, \"Graph\", \"Warning\", \"obj1\")- FAILED");
-  }
-}
 
 void  AliDrawStyleTest_GetProperty(){
   AliDrawStyle::SetCssStyle("alirootTestStyle.css",AliDrawStyle::ReadCSSFile("$AliRoot_SRC/STAT/test/alirootTestStyle.css",0));
@@ -267,7 +238,7 @@ void  AliDrawStyleTest_GetProperty(){
   }else{
     ::Error("AliDrawStyleTest","AliDrawStyle::GetProperty(\"alirootTestStyle.css\",\"line_color\", \"TGraphErrors\", \"Warning\", \"asdasobj56\")- FAILED");
   }
-  if (AliDrawStyle::GetProperty("alirootTestStyle.css","marker_color", "SomeNotExistingClass", "SomeNotExistingStatus", "obj3") == "21,22,23,24"){
+  if (AliDrawStyle::GetProperty("alirootTestStyle.css","marker_color", "SomeNotExistingClass", "SomeNotExistingStatus", "obj3") == "37,38,39,40"){
     ::Info("AliDrawStyleTest","AliDrawStyle::GetProperty(\"alirootTestStyle.css\",\"marker_color\", \"SomeNotExistingClass\", \"SomeNotExistingStatus\", \"obj3\")- IsOK");
   }else{
     ::Error("AliDrawStyleTest","AliDrawStyle::GetProperty(\"alirootTestStyle.css\",\"marker_color\", \"SomeNotExistingClass\", \"SomeNotExistingStatus\", \"obj3\")- FAILED");
@@ -281,16 +252,7 @@ void  AliDrawStyleTest_GetProperty(){
 }
 
 
-void AliDrawStyleTest_GetSelector(){
-
-  if (AliDrawStyle::GetSelector("alirootTestStyle.css") == TString("\n\n\nTGraph#obj1, TGraph.Status#TPC.QA.dcar_posA_1    \t\n\n\n\nTF1.Status, .Status#obj1, #obj3    \t\n\n.Status#obj1, #obj3, TGraphErrors.Warning    \t\n\n\nTH1.Status#obj1, TH1.Warning#obj1, TH1.Warning#obj3    \t")){
-    ::Info("AliDrawStyleTest","AliDrawStyle::GetSelector(\"alirootTestStyle.css\")- IsOK");
-  }else{
-    ::Error("AliDrawStyleTest","AliDrawStyle::GetSelector(\"alirootTestStyle.css\")- FAILED");
-  }
-
-}
-//TODO: added generator of objects and check function
+//TODO: add generator of objects and check function
 //void AliDrawStyleTest_CountObjects(){
   // const Int_t nHis = 10;
   // TH1F *hisArray[nHis];
