@@ -482,12 +482,16 @@ TString  AliDrawStyle::GetPropertyValue(TString input, TString propertyName){
   AliDrawStyle::GetNamedIntegerAt(input,"marker_color",2);  //  return  4
  */
 Int_t    AliDrawStyle::GetNamedIntegerAt(TString input, TString propertyName, Int_t index, Bool_t &status){
+  status=kFALSE;
   TString  value;
   if(propertyName != "") value = AliDrawStyle::GetPropertyValue(input,propertyName);
   else value = input;
   Int_t indexStart=0;
   Int_t indexFinish=value.Index(',',indexStart);
-  if(indexFinish < 0 && value.IsFloat()) return value.Atoi();
+  if(indexFinish < 0 && value.IsFloat()) {
+    status=kTRUE;
+    return value.Atoi();
+  }
   for (Int_t j=0; j<index; j++){
     indexStart=value.Index(',',indexStart)+1;
     indexFinish=value.Index(',',indexStart);
@@ -518,12 +522,16 @@ Int_t    AliDrawStyle::GetNamedIntegerAt(TString input, TString propertyName, In
   AliDrawStyle::GetNamedIntegerAt(input,"marker_color",2);  //  return  4
  */
 Float_t  AliDrawStyle::GetNamedFloatAt(TString input, TString propertyName, Int_t index, Bool_t &status){
+  status=kFALSE;
   TString  value;
   if(propertyName != "") value = AliDrawStyle::GetPropertyValue(input,propertyName);
   else value = input;
   Int_t indexStart=0;
   Int_t indexFinish=value.Index(',',indexStart);
-  if(indexFinish < 0 && value.IsFloat()) return value.Atof();
+  if(indexFinish < 0 && value.IsFloat()) {
+    status=kTRUE;
+    return value.Atof();
+  }
   for (Int_t j=0; j<index; j++){
     indexStart=value.Index(',',indexStart)+1;
     indexFinish=value.Index(',',indexStart);
@@ -617,45 +625,45 @@ void    AliDrawStyle::WriteCSSFile(TObjArray * cssArray, const char *  outputNam
 /// \return            - kTRUE if selector match class name and object name
 /// TODO
 ///   - pre-calculate the tree ? yes, in best practice we should use trees for css parsing. I think later we can implement simple variant.
-Bool_t  AliDrawStyle::IsSelected(TString selectors, TString elementName, TString className, TString objectName){
-  //TString selectors = "TH1.Status#obj1, TH1.Warning#obj1, TH1.Warning#obj3 \tTGraph#obj1, TGraph.Status#TPC.QA.dcar_posA_1 \tTGraph.Warning#TPC.QA.dcar_posA_2 \tTF1.Status, .Status#obj1, #obj3"
+Bool_t  AliDrawStyle::IsSelected(TString selectors, TString elementID, TString classID, TString objectID){
+    //TString selectors = "TH1.Status#obj1, TH1.Warning#obj1, TH1.Warning#obj3 \tTGraph#obj1, TGraph.Status#TPC.QA.dcar_posA_1 \tTGraph.Warning#TPC.QA.dcar_posA_2 \tTF1.Status, .Status#obj1, #obj3"
 
-  Bool_t elementCatched;
-  Bool_t classCatched;
-  Bool_t objectCatched;
-  Ssiz_t fromStart=0;
-  Ssiz_t fromStart1;
+    Bool_t elementCatched;
+    Bool_t classCatched;
+    Bool_t objectCatched;
+    Ssiz_t fromStart=0;
+    Ssiz_t fromStart1;
 
-  TString subSelectors;
-  TString selector;
+    TString subSelectors;
+    TString selector;
 
-  TPRegexp elemPat(".*?[.]");
-  TPRegexp classPat("[.].*[#]");
-  TPRegexp objPat("[#].*");
+    TPRegexp elemPat(".*?[.]");
+    TPRegexp classPat("[.].*[#]");
+    TPRegexp objPat("[#].*");
 
-  while(selectors.Tokenize(subSelectors,fromStart," \t")){
-    fromStart1 = 0;
-   while(subSelectors.Tokenize(selector,fromStart1,", ")){
-     selector = selector.Strip(TString::kBoth, ' ');
-     elementCatched = false;
-     classCatched = false;
-     objectCatched = false;
+    while(selectors.Tokenize(subSelectors,fromStart," \t")){
+        fromStart1 = 0;
+        while(subSelectors.Tokenize(selector,fromStart1,", ")){
+            selector = selector.Strip(TString::kBoth, ' ');
+            elementCatched = false;
+            classCatched = false;
+            objectCatched = false;
 
-     if(selector(objPat) == ""){
-        objectCatched = true;
-        selector.Append("#anyObjects");
-      }
-      else if (selector(objPat) == ("#" + objectName)) objectCatched = true;
-      if(selector(classPat) == ""){
-         classCatched = true;
-         selector.Insert(selector.Index("#"), ".anyClasses");
-       }
-       else if (selector(classPat) == ("." + className + "#")) classCatched = true;
-     if(selector(elemPat) == "." || selector(elemPat) == "" || selector(elemPat) == (elementName + ".")) elementCatched = true;
-     if (elementCatched && classCatched && objectCatched)  return true;
-   }
-  }
-  return false;
+            if(selector(objPat) == ""){
+                objectCatched = true;
+                selector.Append("#anyObjects");
+            }
+            else if (selector(objPat) == ("#" + objectID)) objectCatched = true;
+            if(selector(classPat) == ""){
+                classCatched = true;
+                selector.Insert(selector.Index("#"), ".anyClasses");
+            }
+            else if (selector(classPat) == ("." + classID + "#")) classCatched = true;
+            if(selector(elemPat) == "." || selector(elemPat) == "" || selector(elemPat) == (elementID + ".")) elementCatched = true;
+            if (elementCatched && classCatched && objectCatched)  return true;
+        }
+    }
+    return false;
 }
 
 ///
@@ -680,24 +688,21 @@ TString AliDrawStyle::GetProperty(const char *styleName, TString propertyName, T
     TString actProperty = "";
     Int_t entries = fCssStyleAlice[styleName]->GetEntriesFast();
     TString declaration="";
+    TString className = "";
+    Ssiz_t fromStart;
     for(Int_t i = 0; i < entries; i++) {
-      if(AliDrawStyle::IsSelected(TString(fCssStyleAlice[styleName]->At(i)->GetName()), elementID, classID, objectID)) {
-        value = AliDrawStyle::GetPropertyValue(fCssStyleAlice[styleName]->At(i)->GetTitle(),propertyName);
-        if (value != "") actProperty = value.Strip(TString::kBoth, ' ');
+      fromStart = 0;
+      while (classID.Tokenize(className, fromStart, ",")) {
+        if (AliDrawStyle::IsSelected(TString(fCssStyleAlice[styleName]->At(i)->GetName()), elementID, className,
+                                     objectID)) {
+          value = AliDrawStyle::GetPropertyValue(fCssStyleAlice[styleName]->At(i)->GetTitle(), propertyName);
+          if (value != "") actProperty = value.Strip(TString::kBoth, ' ');
+        }
       }
     }
     return actProperty;
 }
-///
-/// \param ObjName name of the object according to our css notation elementID.class(classID1, classID2, ...)#objectID[numberOfObject]
-/// \return number from object name
-Int_t AliDrawStyle::GetObjectIndex (TString objName) {
-  Int_t objNum = 0;
-  TPRegexp numPat0("[[].*[]]");
-  TPRegexp numPat1("[0-9]+");
-  objNum = TString(TString(objName(numPat0))(numPat1)).Atoi();
-  return objNum;
-}
+
 ///
 /// \param styleName
 /// \param cGraph
@@ -705,46 +710,49 @@ Int_t AliDrawStyle::GetObjectIndex (TString objName) {
 /// \param className
 /// \param objName
 /// \param objNum
-void AliDrawStyle::TGraphApplyStyle(const char* styleName, TGraph *cGraph, TString elementName, TString className, TString objName){
+void AliDrawStyle::TGraphApplyStyle(const char* styleName, TGraph *cGraph){
 
-  Bool_t status = true;
-  Int_t objNum = AliDrawStyle::GetObjectIndex(objName);
+  Bool_t status;
+  TString elementID = "";
+  TString classID = "";
+  TString objectID = "";
+  Int_t objectNum = 0;
+  AliDrawStyle::GetIds(cGraph, elementID, classID, objectID, objectNum);
   TString property = "";
   Int_t valueI = 0;
   Float_t valueF = 0.0;
-  TPRegexp objPat(".*[[?]|.*[.]class|.*");
-  objName = TString(objName(objPat)).ReplaceAll("[", "").ReplaceAll(".class", "");
 
-  property = AliDrawStyle::GetProperty(styleName, "marker_color", elementName, className, objName);
-  valueI = AliDrawStyle::GetNamedIntegerAt(property, "", objNum, status);
+
+  property = AliDrawStyle::GetProperty(styleName, "marker_color", elementID, classID, objectID);
+  valueI = AliDrawStyle::GetNamedIntegerAt(property, "", objectNum, status);
   if (property != "" && status) cGraph->SetMarkerColor(valueI);
 
-  property = AliDrawStyle::GetProperty(styleName, "marker_size", elementName, className, objName);
-  valueF = AliDrawStyle::GetNamedFloatAt(property, "", objNum, status);
+  property = AliDrawStyle::GetProperty(styleName, "marker_size", elementID, classID, objectID);
+  valueF = AliDrawStyle::GetNamedFloatAt(property, "", objectNum, status);
   if (property != "" && status) cGraph->SetMarkerSize(valueF);
 
-  property = AliDrawStyle::GetProperty(styleName, "marker_style", elementName, className, objName);
-  valueI = AliDrawStyle::GetNamedIntegerAt(property, "", objNum, status);
+  property = AliDrawStyle::GetProperty(styleName, "marker_style", elementID, classID, objectID);
+  valueI = AliDrawStyle::GetNamedIntegerAt(property, "", objectNum, status);
   if (property != "" && status) cGraph->SetMarkerStyle(valueI);
 
-  property = AliDrawStyle::GetProperty(styleName, "line_color", elementName, className, objName);
-  valueI = AliDrawStyle::GetNamedIntegerAt(property, "", objNum, status);
+  property = AliDrawStyle::GetProperty(styleName, "line_color", elementID, classID, objectID);
+  valueI = AliDrawStyle::GetNamedIntegerAt(property, "", objectNum, status);
   if (property != "" && status) cGraph->SetLineColor(valueI);
 
-  property = AliDrawStyle::GetProperty(styleName, "line_width", elementName, className, objName);
-  valueF = AliDrawStyle::GetNamedFloatAt(property, "", objNum, status);
+  property = AliDrawStyle::GetProperty(styleName, "line_width", elementID, classID, objectID);
+  valueF = AliDrawStyle::GetNamedFloatAt(property, "", objectNum, status);
   if (property != "" && status) cGraph->SetLineWidth(valueF);
 
-  property = AliDrawStyle::GetProperty(styleName, "line_style", elementName, className, objName);
-  valueI = AliDrawStyle::GetNamedIntegerAt(property, "", objNum, status);
+  property = AliDrawStyle::GetProperty(styleName, "line_style", elementID, classID, objectID);
+  valueI = AliDrawStyle::GetNamedIntegerAt(property, "", objectNum, status);
   if (property != "" && status) cGraph->SetLineStyle(valueI);
 
-  property = AliDrawStyle::GetProperty(styleName, "fill_color", elementName, className, objName);
-  valueI = AliDrawStyle::GetNamedIntegerAt(property, "", objNum, status);
+  property = AliDrawStyle::GetProperty(styleName, "fill_color", elementID, classID, objectID);
+  valueI = AliDrawStyle::GetNamedIntegerAt(property, "", objectNum, status);
   if (property != "" && status) cGraph->SetFillColor(valueI);
 
-  property = AliDrawStyle::GetProperty(styleName, "fill_style", elementName, className, objName);
-  valueI = AliDrawStyle::GetNamedIntegerAt(property, "", objNum, status);
+  property = AliDrawStyle::GetProperty(styleName, "fill_style", elementID, classID, objectID);
+  valueI = AliDrawStyle::GetNamedIntegerAt(property, "", objectNum, status);
   if (property != "" && status) cGraph->SetFillStyle(valueI);
 }
 
@@ -755,45 +763,47 @@ void AliDrawStyle::TGraphApplyStyle(const char* styleName, TGraph *cGraph, TStri
 /// \param className
 /// \param objName
 /// \param objNum
-void AliDrawStyle::TH1ApplyStyle(const char* styleName, TH1 *cHis, TString elementName, TString className, TString objName){
-  Bool_t status = true;
-  Int_t objNum = AliDrawStyle::GetObjectIndex(objName);
+void AliDrawStyle::TH1ApplyStyle(const char* styleName, TH1 *cHis){
+  Bool_t status;
+  TString elementID = "";
+  TString classID = "";
+  TString objectID = "";
+  Int_t objectNum = 0;
+  AliDrawStyle::GetIds(cHis, elementID, classID, objectID, objectNum);
   TString property = "";
   Int_t valueI = 0;
   Float_t valueF = 0.0;
-  TPRegexp objPat(".*[[?]|.*[.]class|.*");
-  objName = TString(objName(objPat)).ReplaceAll("[", "").ReplaceAll(".class", "");
 
-  property = AliDrawStyle::GetProperty(styleName, "marker_color", elementName, className, objName);
-  valueI = AliDrawStyle::GetNamedIntegerAt(property, "", objNum, status);
+  property = AliDrawStyle::GetProperty(styleName, "marker_color", elementID, classID, objectID);
+  valueI = AliDrawStyle::GetNamedIntegerAt(property, "", objectNum, status);
   if (property != "" && status) cHis->SetMarkerColor(valueI);
 
-  property = AliDrawStyle::GetProperty(styleName, "marker_size", elementName, className, objName);
-  valueF = AliDrawStyle::GetNamedFloatAt(property, "", objNum, status);
+  property = AliDrawStyle::GetProperty(styleName, "marker_size", elementID, classID, objectID);
+  valueF = AliDrawStyle::GetNamedFloatAt(property, "", objectNum, status);
   if (property != "" && status) cHis->SetMarkerSize(valueF);
 
-  property = AliDrawStyle::GetProperty(styleName, "marker_style", elementName, className, objName);
-  valueI = AliDrawStyle::GetNamedIntegerAt(property, "", objNum, status);
+  property = AliDrawStyle::GetProperty(styleName, "marker_style", elementID, classID, objectID);
+  valueI = AliDrawStyle::GetNamedIntegerAt(property, "", objectNum, status);
   if (property != "" && status) cHis->SetMarkerStyle(valueI);
 
-  property = AliDrawStyle::GetProperty(styleName, "line_color", elementName, className, objName);
-  valueI = AliDrawStyle::GetNamedIntegerAt(property, "", objNum, status);
+  property = AliDrawStyle::GetProperty(styleName, "line_color", elementID, classID, objectID);
+  valueI = AliDrawStyle::GetNamedIntegerAt(property, "", objectNum, status);
   if (property != "" && status) cHis->SetLineColor(valueI);
 
-  property = AliDrawStyle::GetProperty(styleName, "line_width", elementName, className, objName);
-  valueF = AliDrawStyle::GetNamedFloatAt(property, "", objNum, status);
+  property = AliDrawStyle::GetProperty(styleName, "line_width", elementID, classID, objectID);
+  valueF = AliDrawStyle::GetNamedFloatAt(property, "", objectNum, status);
   if (property != "" && status) cHis->SetLineWidth(valueF);
 
-  property = AliDrawStyle::GetProperty(styleName, "line_style", elementName, className, objName);
-  valueI = AliDrawStyle::GetNamedIntegerAt(property, "", objNum, status);
+  property = AliDrawStyle::GetProperty(styleName, "line_style", elementID, classID, objectID);
+  valueI = AliDrawStyle::GetNamedIntegerAt(property, "", objectNum, status);
   if (property != "" && status) cHis->SetLineStyle(valueI);
 
-  property = AliDrawStyle::GetProperty(styleName, "fill_color", elementName, className, objName);
-  valueI = AliDrawStyle::GetNamedIntegerAt(property, "", objNum, status);
+  property = AliDrawStyle::GetProperty(styleName, "fill_color", elementID, classID, objectID);
+  valueI = AliDrawStyle::GetNamedIntegerAt(property, "", objectNum, status);
   if (property != "" && status) cHis->SetFillColor(valueI);
 
-  property = AliDrawStyle::GetProperty(styleName, "fill_style", elementName, className, objName);
-  valueI = AliDrawStyle::GetNamedIntegerAt(property, "", objNum, status);
+  property = AliDrawStyle::GetProperty(styleName, "fill_style", elementID, classID, objectID);
+  valueI = AliDrawStyle::GetNamedIntegerAt(property, "", objectNum, status);
   if (property != "" && status) cHis->SetFillStyle(valueI);
 }
 
@@ -804,46 +814,48 @@ void AliDrawStyle::TH1ApplyStyle(const char* styleName, TH1 *cHis, TString eleme
 /// \param className
 /// \param objName
 /// \param objNum
-void AliDrawStyle::TF1ApplyStyle(const char* styleName, TF1 *cFunc, TString elementName, TString className, TString objName){
+void AliDrawStyle::TF1ApplyStyle(const char* styleName, TF1 *cFunc) {
   //still not implemented applyStyle for fitFunction for TH1
-  Bool_t status = true;
-  Int_t objNum = AliDrawStyle::GetObjectIndex(objName);
+  Bool_t status;
+  TString elementID = "";
+  TString classID = "";
+  TString objectID = "";
+  Int_t objectNum = 0;
+  AliDrawStyle::GetIds(cFunc, elementID, classID, objectID, objectNum);
   TString property = "";
   Int_t valueI = 0;
   Float_t valueF = 0.0;
-  TPRegexp objPat(".*[[?]|.*[.]class|.*");
-  objName = TString(objName(objPat)).ReplaceAll("[", "").ReplaceAll(".class", "");
 
-  property = AliDrawStyle::GetProperty(styleName, "marker_color", elementName, className, objName);
-  valueI = AliDrawStyle::GetNamedIntegerAt(property, "", objNum, status);
+  property = AliDrawStyle::GetProperty(styleName, "marker_color", elementID, classID, objectID);
+  valueI = AliDrawStyle::GetNamedIntegerAt(property, "", objectNum, status);
   if (property != "" && status) cFunc->SetMarkerColor(valueI);
 
-  property = AliDrawStyle::GetProperty(styleName, "marker_size", elementName, className, objName);
-  valueF = AliDrawStyle::GetNamedFloatAt(property, "", objNum, status);
+  property = AliDrawStyle::GetProperty(styleName, "marker_size", elementID, classID, objectID);
+  valueF = AliDrawStyle::GetNamedFloatAt(property, "", objectNum, status);
   if (property != "" && status) cFunc->SetMarkerSize(valueF);
 
-  property = AliDrawStyle::GetProperty(styleName, "marker_style", elementName, className, objName);
-  valueI = AliDrawStyle::GetNamedIntegerAt(property, "", objNum, status);
+  property = AliDrawStyle::GetProperty(styleName, "marker_style", elementID, classID, objectID);
+  valueI = AliDrawStyle::GetNamedIntegerAt(property, "", objectNum, status);
   if (property != "" && status) cFunc->SetMarkerStyle(valueI);
 
-  property = AliDrawStyle::GetProperty(styleName, "line_color", elementName, className, objName);
-  valueI = AliDrawStyle::GetNamedIntegerAt(property, "", objNum, status);
+  property = AliDrawStyle::GetProperty(styleName, "line_color", elementID, classID, objectID);
+  valueI = AliDrawStyle::GetNamedIntegerAt(property, "", objectNum, status);
   if (property != "" && status) cFunc->SetLineColor(valueI);
 
-  property = AliDrawStyle::GetProperty(styleName, "line_width", elementName, className, objName);
-  valueF = AliDrawStyle::GetNamedFloatAt(property, "", objNum, status);
+  property = AliDrawStyle::GetProperty(styleName, "line_width", elementID, classID, objectID);
+  valueF = AliDrawStyle::GetNamedFloatAt(property, "", objectNum, status);
   if (property != "" && status) cFunc->SetLineWidth(valueF);
 
-  property = AliDrawStyle::GetProperty(styleName, "line_style", elementName, className, objName);
-  valueI = AliDrawStyle::GetNamedIntegerAt(property, "", objNum, status);
+  property = AliDrawStyle::GetProperty(styleName, "line_style", elementID, classID, objectID);
+  valueI = AliDrawStyle::GetNamedIntegerAt(property, "", objectNum, status);
   if (property != "" && status) cFunc->SetLineStyle(valueI);
 
-  property = AliDrawStyle::GetProperty(styleName, "fill_color", elementName, className, objName);
-  valueI = AliDrawStyle::GetNamedIntegerAt(property, "", objNum, status);
+  property = AliDrawStyle::GetProperty(styleName, "fill_color", elementID, classID, objectID);
+  valueI = AliDrawStyle::GetNamedIntegerAt(property, "", objectNum, status);
   if (property != "" && status) cFunc->SetFillColor(valueI);
 
-  property = AliDrawStyle::GetProperty(styleName, "fill_style", elementName, className, objName);
-  valueI = AliDrawStyle::GetNamedIntegerAt(property, "", objNum, status);
+  property = AliDrawStyle::GetProperty(styleName, "fill_style", elementID, classID, objectID);
+  valueI = AliDrawStyle::GetNamedIntegerAt(property, "", objectNum, status);
   if (property != "" && status) cFunc->SetFillStyle(valueI);
 }
 
@@ -853,24 +865,57 @@ void AliDrawStyle::TF1ApplyStyle(const char* styleName, TF1 *cFunc, TString elem
 /// \param elementName
 /// \param className
 /// \param objName
-void AliDrawStyle::TPadApplyStyle(const char* styleName, TPad *cPad, TString elementName, TString className, TString objName){
+void AliDrawStyle::TPadApplyStyle(const char* styleName, TPad *cPad){
   Bool_t status;
-  TPRegexp objPat(".*[[?]|.*[.]class|.*");
-  objName = TString(objName(objPat)).ReplaceAll("[", "").ReplaceAll(".class", "");
-  if (AliDrawStyle::GetProperty(styleName, "fill_color", elementName, className, objName) != "") cPad->SetFillColor(AliDrawStyle::GetNamedIntegerAt(AliDrawStyle::GetProperty(styleName, "fill_color", elementName, className, objName), "", 0, status));
-  if (AliDrawStyle::GetProperty(styleName, "bottom_margin", elementName, className, objName) != "") cPad->SetBottomMargin(AliDrawStyle::GetNamedFloatAt(AliDrawStyle::GetProperty(styleName, "bottom_margin", elementName, className, objName), "", 0, status));
-  if (AliDrawStyle::GetProperty(styleName, "top_margin", elementName, className, objName) != "") cPad->SetTopMargin(AliDrawStyle::GetNamedFloatAt(AliDrawStyle::GetProperty(styleName, "top_margin", elementName, className, objName), "", 0, status));
-  if (AliDrawStyle::GetProperty(styleName, "left_margin", elementName, className, objName) != "") cPad->SetLeftMargin(AliDrawStyle::GetNamedFloatAt(AliDrawStyle::GetProperty(styleName, "left_margin", elementName, className, objName), "", 0, status));
-  if (AliDrawStyle::GetProperty(styleName, "right_margin", elementName, className, objName) != "") cPad->SetRightMargin(AliDrawStyle::GetNamedFloatAt(AliDrawStyle::GetProperty(styleName, "right_margin", elementName, className, objName), "", 0, status));
-  if (AliDrawStyle::GetProperty(styleName, "border_size", elementName, className, objName) != "") cPad->SetBorderSize(AliDrawStyle::GetNamedIntegerAt(AliDrawStyle::GetProperty(styleName, "border_size", elementName, className, objName), "", 0, status));
-  if (AliDrawStyle::GetProperty(styleName, "border_mode", elementName, className, objName) != "") cPad->SetBorderMode(AliDrawStyle::GetNamedIntegerAt(AliDrawStyle::GetProperty(styleName, "border_mode", elementName, className, objName), "", 0, status));
-  if (AliDrawStyle::GetProperty(styleName, "gridX", elementName, className, objName) != "") cPad->SetGridx(AliDrawStyle::GetNamedIntegerAt(AliDrawStyle::GetProperty(styleName, "gridX", elementName, className, objName), "", 0, status));
-  if (AliDrawStyle::GetProperty(styleName, "gridY", elementName, className, objName) != "") cPad->SetGridy(AliDrawStyle::GetNamedIntegerAt(AliDrawStyle::GetProperty(styleName, "gridY", elementName, className, objName), "", 0, status));
-  if (AliDrawStyle::GetProperty(styleName, "tickX", elementName, className, objName) != "") cPad->SetTickx(AliDrawStyle::GetNamedIntegerAt(AliDrawStyle::GetProperty(styleName, "tickX", elementName, className, objName), "", 0, status));
-  if (AliDrawStyle::GetProperty(styleName, "tickY", elementName, className, objName) != "") cPad->SetTicky(AliDrawStyle::GetNamedIntegerAt(AliDrawStyle::GetProperty(styleName, "tickY", elementName, className, objName), "", 0, status));
-  if (AliDrawStyle::GetProperty(styleName, "logX", elementName, className, objName) != "") cPad->SetLogx(AliDrawStyle::GetNamedIntegerAt(AliDrawStyle::GetProperty(styleName, "logX", elementName, className, objName), "", 0, status));
-  if (AliDrawStyle::GetProperty(styleName, "logY", elementName, className, objName) != "") cPad->SetLogy(AliDrawStyle::GetNamedIntegerAt(AliDrawStyle::GetProperty(styleName, "logY", elementName, className, objName), "", 0, status));
-  if (AliDrawStyle::GetProperty(styleName, "logZ", elementName, className, objName) != "") cPad->SetLogz(AliDrawStyle::GetNamedIntegerAt(AliDrawStyle::GetProperty(styleName, "logZ", elementName, className, objName), "", 0, status));
+  TString elementID = "";
+  TString classID = "";
+  TString objectID = "";
+  Int_t objectNum = 0;
+  AliDrawStyle::GetIds(cPad, elementID, classID, objectID, objectNum);
+  TString property = "";
+
+  property = AliDrawStyle::GetProperty(styleName, "fill_color", elementID, classID, objectID);
+  if (property != "") cPad->SetFillColor(AliDrawStyle::GetNamedIntegerAt(property, "", objectNum, status));
+
+  property = AliDrawStyle::GetProperty(styleName, "bottom_margin", elementID, classID, objectID);
+  if (property != "") cPad->SetBottomMargin(AliDrawStyle::GetNamedFloatAt(property, "", objectNum, status));
+
+  property = AliDrawStyle::GetProperty(styleName, "top_margin", elementID, classID, objectID);
+  if (property != "") cPad->SetTopMargin(AliDrawStyle::GetNamedFloatAt(property, "", objectNum, status));
+
+  property = AliDrawStyle::GetProperty(styleName, "left_margin", elementID, classID, objectID);
+  if (property != "") cPad->SetLeftMargin(AliDrawStyle::GetNamedFloatAt(property, "", objectNum, status));
+
+  property = AliDrawStyle::GetProperty(styleName, "right_margin", elementID, classID, objectID);
+  if (property != "") cPad->SetRightMargin(AliDrawStyle::GetNamedFloatAt(property, "", objectNum, status));
+
+  property = AliDrawStyle::GetProperty(styleName, "border_size", elementID, classID, objectID);
+  if (property != "") cPad->SetBorderSize(AliDrawStyle::GetNamedIntegerAt(property, "", objectNum, status));
+
+  property = AliDrawStyle::GetProperty(styleName, "border_mode", elementID, classID, objectID);
+  if (property != "") cPad->SetBorderMode(AliDrawStyle::GetNamedIntegerAt(property, "", objectNum, status));
+
+  property = AliDrawStyle::GetProperty(styleName, "gridX", elementID, classID, objectID);
+  if (property != "") cPad->SetGridx(AliDrawStyle::GetNamedIntegerAt(property, "", objectNum, status));
+
+  property = AliDrawStyle::GetProperty(styleName, "gridY", elementID, classID, objectID);
+  if (property != "") cPad->SetGridy(AliDrawStyle::GetNamedIntegerAt(property, "", objectNum, status));
+
+  property = AliDrawStyle::GetProperty(styleName, "tickX", elementID, classID, objectID);
+  if (property != "") cPad->SetTickx(AliDrawStyle::GetNamedIntegerAt(property, "", objectNum, status));
+
+  property = AliDrawStyle::GetProperty(styleName, "tickY", elementID, classID, objectID);
+  if (property != "") cPad->SetTicky(AliDrawStyle::GetNamedIntegerAt(property, "", objectNum, status));
+
+  property = AliDrawStyle::GetProperty(styleName, "logX", elementID, classID, objectID);
+  if (property != "") cPad->SetLogx(AliDrawStyle::GetNamedIntegerAt(property, "", objectNum, status));
+
+  property = AliDrawStyle::GetProperty(styleName, "logY", elementID, classID, objectID);
+  if (property != "") cPad->SetLogy(AliDrawStyle::GetNamedIntegerAt(property, "", objectNum, status));
+
+  property = AliDrawStyle::GetProperty(styleName, "logZ", elementID, classID, objectID);
+  if (property != "") cPad->SetLogz(AliDrawStyle::GetNamedIntegerAt(property, "", objectNum, status));
+
 }
 
 ///
@@ -879,13 +924,45 @@ void AliDrawStyle::TPadApplyStyle(const char* styleName, TPad *cPad, TString ele
 /// \param elementName
 /// \param className
 /// \param objName
-void AliDrawStyle::TCanvasApplyCssStyle(const char* styleName, TCanvas *cCanvas, TString elementName, TString className, TString objName){
+void AliDrawStyle::TCanvasApplyCssStyle(const char* styleName, TCanvas *cCanvas){
   Bool_t status;
-  TPRegexp objPat(".*[[?]|.*[.]class|.*");
-  objName = TString(objName(objPat)).ReplaceAll("[", "").ReplaceAll(".class", "");
-  if (AliDrawStyle::GetProperty(styleName, "fill_color", elementName, className, objName) != "") cCanvas->SetFillColor(AliDrawStyle::GetNamedIntegerAt(AliDrawStyle::GetProperty(styleName, "fill_color", elementName, className, objName), "", 0, status));
-  if (AliDrawStyle::GetProperty(styleName, "border_size", elementName, className, objName) != "") cCanvas->SetBorderSize(AliDrawStyle::GetNamedIntegerAt(AliDrawStyle::GetProperty(styleName, "border_size", elementName, className, objName), "", 0, status));
-  if (AliDrawStyle::GetProperty(styleName, "border_mode", elementName, className, objName) != "") cCanvas->SetBorderMode(AliDrawStyle::GetNamedIntegerAt(AliDrawStyle::GetProperty(styleName, "border_mode", elementName, className, objName), "", 0, status));
+  TString elementID = "";
+  TString classID = "";
+  TString objectID = "";
+  Int_t objectNum = 0;
+  AliDrawStyle::GetIds(cCanvas, elementID, classID, objectID, objectNum);
+  TString property = "";
+
+  property = AliDrawStyle::GetProperty(styleName, "fill_color", elementID, classID, objectID);
+  if (property != "") cCanvas->SetFillColor(AliDrawStyle::GetNamedIntegerAt(property, "", objectNum, status));
+
+  property = AliDrawStyle::GetProperty(styleName, "border_size", elementID, classID, objectID);
+  if (property != "") cCanvas->SetBorderSize(AliDrawStyle::GetNamedIntegerAt(property, "", objectNum, status));
+
+  property = AliDrawStyle::GetProperty(styleName, "border_mode", elementID, classID, objectID);
+  if (property != "") cCanvas->SetBorderMode(AliDrawStyle::GetNamedIntegerAt(property, "", objectNum, status));
+}
+
+/*!
+ *
+ * @param cObj
+ * @param elementID
+ * @param classSet
+ * @param objectID
+ */
+void AliDrawStyle::GetIds(TObject *cObj, TString &elementID, TString &classID, TString &objectID, Int_t &objNum) {
+
+    elementID = cObj->ClassName();
+    objectID = TString(cObj->GetName());
+    TPRegexp classPat("[(].*[)]");
+    classID = objectID(classPat);
+    classID = classID(1, classID.Index(")") - 1);
+    TPRegexp numPat0("[[].*[]]");
+    TPRegexp numPat1("[0-9]+");
+    objNum = TString(TString(objectID(numPat0))(numPat1)).Atoi();
+    TPRegexp objPat(".*[[?]|.*[.]class|.*");
+    objectID = TString(objectID(objPat)).ReplaceAll("[", "").ReplaceAll(".class", "");
+
 }
 
 ///
@@ -898,57 +975,36 @@ void AliDrawStyle::ApplyCssStyle(TPad *pad, const char* styleName){
     return;
   }
 
-  TPad *tempPad = NULL;
-  TObject *tempObj = NULL;
-  TCanvas *tempCanvas = NULL;
+  TObject *cObj = NULL;
   TList *oList = NULL;
-  TString classSet = "";
-  Ssiz_t fromStart;
-  TString elementName = "";
-  TString objName = "";
-  TString className = "";
-  TPRegexp classPat("[(].*[)]");
+  TString elementID = "";
+  TString objectID = "";
+  TString classID = "";
+  Int_t objectNum = 0;
 
   oList = pad->GetListOfPrimitives();
 
-  elementName = pad->ClassName();
-  objName = TString(pad->GetName());
-  classSet = objName(classPat);
-  classSet = classSet(1, classSet.Index(")") - 1);
-  fromStart = 0;
+  GetIds(pad, elementID, classID, objectID, objectNum);
 
-  if (TString(pad->ClassName()) == "TCanvas") {
-    objName = TString(pad->GetTitle());
-    classSet = objName(classPat);
-    classSet = classSet(1, classSet.Index(")") - 1);
-    while(classSet.Tokenize(className,fromStart,",")) {
-      tempCanvas = (TCanvas *) pad;
-      AliDrawStyle::TCanvasApplyCssStyle(styleName, tempCanvas, elementName, className, objName);
-    }
+  if (elementID == "TCanvas") {
+
+    AliDrawStyle::TCanvasApplyCssStyle(styleName, (TCanvas *) pad);
     pad->Modified();
     for(Int_t c = 0; c < oList->GetEntries(); c++) {
-      tempPad = (TPad *) oList->At(c);
-      AliDrawStyle::ApplyCssStyle(tempPad, styleName);
+      AliDrawStyle::ApplyCssStyle((TPad *) oList->At(c), styleName);
     }
   }
 
-  if (TString(pad->ClassName()) == "TPad") while(classSet.Tokenize(className,fromStart,",")) AliDrawStyle::TPadApplyStyle(styleName, pad, elementName, className, objName);
+  if (elementID == "TPad") AliDrawStyle::TPadApplyStyle(styleName, pad);
 
   for (Int_t k = 0; k < oList->GetEntries(); k++)
   {
-    tempObj = oList->At(k);
-    if (tempObj->InheritsFrom("TH1") || tempObj->InheritsFrom("TGraph") || tempObj->InheritsFrom("TF1")) {
-      elementName = tempObj->ClassName();
-      objName = TString(tempObj->GetName());
-      classSet = objName(classPat);
-      classSet = classSet(1, classSet.Index(")") - 1);
-      fromStart = 0;
-      while(classSet.Tokenize(className,fromStart,",")) {
-        if (tempObj->InheritsFrom("TH1")) AliDrawStyle::TH1ApplyStyle(styleName, (TH1 *) tempObj, elementName, className, objName);
-        if (tempObj->InheritsFrom("TGraph")) AliDrawStyle::TGraphApplyStyle (styleName, (TGraph *) tempObj, elementName, className, objName);
-        if (tempObj->InheritsFrom("TF1")) AliDrawStyle::TF1ApplyStyle(styleName, (TF1 *) tempObj, elementName, className, objName);
-      }
-    }
+      cObj = oList->At(k);
+      GetIds(cObj, elementID, classID, objectID, objectNum);
+      if (cObj->InheritsFrom("TH1")) AliDrawStyle::TH1ApplyStyle(styleName, (TH1 *) cObj);
+      if (cObj->InheritsFrom("TGraph")) AliDrawStyle::TGraphApplyStyle (styleName, (TGraph *) cObj);
+      if (cObj->InheritsFrom("TF1")) AliDrawStyle::TF1ApplyStyle(styleName, (TF1 *) cObj);
+
   }
   pad->Modified();
 }

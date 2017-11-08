@@ -71,20 +71,11 @@ testAliDrawStyleTest() {
     .x ./AliDrawStyleTest.C+
 EOF
 
-  Ali=$"AliDrawStyle::"
-
-  declare -a funcList=("GetMarkerStyle(" "GetPropertyValue(" "GetNamedIntegerAt(" "GetNamedFloatAt(" "WriteCSSFile(" "GetProperty(")
-  N_CALLS=0
-  for i in "${funcList[@]}"
-  do
-  N_CALLS=$(expr $N_CALLS + $(expr $(grep -c $Ali$i $AliRoot_SRC/STAT/test/AliDrawStyleTest.C) / 3))
-  done
-
   N_GOOD=$(grep -cE 'Ali.*OK' AliDrawStyleTest.log)
   N_BAD=$(grep -c "E-Ali" AliDrawStyleTest.log)
 
   TEST_STATUS=0
-  if [[ $N_GOOD != $N_CALLS ]]; then
+  if [[ $N_GOOD != 27 ]]; then
     alilog_error "statTest.AliDrawStyleTest: Test FAILED"
     ((TEST_STATUS++))
   fi
