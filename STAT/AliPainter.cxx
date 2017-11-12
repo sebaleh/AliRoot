@@ -41,7 +41,6 @@
 ///                                 - technically attribute can be added to the object name  axis-sharing=""
 ///                            classID
 /*!
-
   #### Example use:
     \code
     AliExternalInfo info("","",0);
@@ -145,10 +144,10 @@ void AliPainter::DivideTPad(TPad*pad, const char *division) {
 ///
 /// \param graph
 /// \param option
-void AliPainter::SetMultiGraphTimeAxis(TMultiGraph *graph, TString option) {
+void AliPainter::SetMultiGraphTimeAxis(TMultiGraph *graph, TString option){
   TAxis *axis = NULL;
-  for (Int_t i = 0; i < graph->GetListOfGraphs()->GetEntries(); i++) {
-    TGraph *cGraph = (TGraph *) graph->GetListOfGraphs()->At(i);
+  for (Int_t i=0; i<graph->GetListOfGraphs()->GetEntries(); i++) {
+    TGraph *cGraph=(TGraph *) graph->GetListOfGraphs()->At(i);
     if (option.Contains("X")) axis = cGraph->GetXaxis();
     if (option.Contains("Y")) axis = cGraph->GetYaxis();
     if (axis) {
