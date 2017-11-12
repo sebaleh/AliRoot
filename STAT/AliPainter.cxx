@@ -33,23 +33,120 @@
 ///
 /// \param pad           - input pad to divide
 /// \param division      - division string
-///                         <NULL,vertical,horizontal>[div0,div1, ...]
+///                         <NULL,vertical,horizontal>[div0,div1b, ...]
 ///                            divi - specify number of pads in row (resp. column)
 ///                                 - sharing parameter for axis
-///                                 - btlr  (bottom,lefttop,right)
+///                                 - btlrm  (bottom, left, top, right, middle) middle means rl for horizontal and tb for vertical
 ///                                 - set margin0 in case specified
 ///                                 - technically attribute can be added to the object name  axis-sharing=""
-///                            classID
+///                                 - 1lpx30 - means set for pad left margin equal 30pixels
+/// \param classID        - adds classID to name of the pad
 /*!
 
   #### Example use:
+
+  1. Let's add some tree with Histogramm:
+        For this you can use
+        \code
+          AliExternalInfo info("","",0);
+          tree = info.GetTree("QA.TPC","LHC15o","pass1");
+         \endcode
+  2. Create canvas and divide it:
+          \code
+            TCanvas * canvasQA = new TCanvas("canvasQA","canvasQA", 1200,800);
+            AliPainter::DivideTPad(canvasQA,"<horizontal>[1,1,1,1]", "Raw,Error");
+            canvasQA->cd(1);
+            TStatToolkit::DrawMultiGraph(TStatToolkit::MakeMultGraph(tree,"", "meanMIPele:run","1","25", "1",1,1,5,0),"ap");
+            canvasQA->cd(2);
+            TStatToolkit::DrawMultiGraph(TStatToolkit::MakeMultGraph(tree,"", "meanMIPele:run","1","25", "1",1,1,5,0),"ap");
+            canvasQA->cd(3);
+            TStatToolkit::DrawMultiGraph(TStatToolkit::MakeMultGraph(tree,"", "meanMIPele:meanMIP","1","25", "1",0,1,5,0),"ap");
+            canvasQA->cd(4);
+            TStatToolkit::DrawMultiGraph(TStatToolkit::MakeMultGraph(tree,"", "meanMIPele:meanMIP","1","25", "1",0,1,5,0),"ap");
+         \endcode
+         In this simple case we have four vertical pads:
+         \image html $AliRoot_SRC/doxygen/canvasQA4v.jpg
+         In case with horizontal position we will have next plot:
+         \image html $AliRoot_SRC/doxygen/canvasQA4h.jpg
+  3. You can sharing choosen axis (see meanings of flags in description.):
+        \code
+            TCanvas * canvasQA = new TCanvas("canvasQA","canvasQA", 1200,800);
+            AliPainter::DivideTPad(canvasQA,"<vertical>[1r,1l,1r,1l]", "Raw,Error");
+            ...
+         \endcode
+         \image html $AliRoot_SRC/doxygen/canvasQA4hbt.jpg
+
+       and for vertical
+       \code
+            TCanvas * canvasQA = new TCanvas("canvasQA","canvasQA", 1200,800);
+            AliPainter::DivideTPad(canvasQA,"<vertical>[1r,1l,1r,1l]", "Raw,Error");
+            ...
+       \endcode
+        \image html $AliRoot_SRC/doxygen/canvasQA4vrl.jpg
     \code
-    AliExternalInfo info("","",0);
-    tree = info.GetTree("QA.TPC","LHC15o","pass1");
-    TCanvas * canvasQA = new TCanvas("canvasQA","canvasQA", 1200,800);
-    AliPainter::DivideTPad(canvasQA,"<vertical>[1,3m,2m,1b,1t]");
+  4. You can specify more than one pads in one raw:
+         \code
+            TCanvas * canvasQA = new TCanvas("canvasQA","canvasQA", 1200,800);
+            AliPainter::DivideTPad(canvasQA,"<horizontal>[1,3,2,1]", "Raw,Error");
+            canvasQA->cd(1);
+            TStatToolkit::DrawMultiGraph(TStatToolkit::MakeMultGraph(tree,"", "meanMIPele:run","1","25", "1",1,1,5,0),"ap");
+            canvasQA->cd(2);
+            TStatToolkit::DrawMultiGraph(TStatToolkit::MakeMultGraph(tree,"", "meanMIPele:run","1","25", "1",1,1,5,0),"ap");
+            canvasQA->cd(3);
+            TStatToolkit::DrawMultiGraph(TStatToolkit::MakeMultGraph(tree,"", "meanMIPele:meanMIP","1","25", "1",0,1,5,0),"ap");
+            canvasQA->cd(4);
+            TStatToolkit::DrawMultiGraph(TStatToolkit::MakeMultGraph(tree,"", "meanMIPele:meanMIP","1","25", "1",0,1,5,0),"ap");
+            canvasQA->cd(5);
+            TStatToolkit::DrawMultiGraph(TStatToolkit::MakeMultGraph(tree,"", "meanMIPele:meanMIP","1","25", "1",0,1,5,0),"ap");
+            canvasQA->cd(6);
+            TStatToolkit::DrawMultiGraph(TStatToolkit::MakeMultGraph(tree,"", "meanMIPele:meanMIP","1","25", "1",0,1,5,0),"ap");
+            canvasQA->cd(7);
+            TStatToolkit::DrawMultiGraph(TStatToolkit::MakeMultGraph(tree,"", "meanMIPele:meanMIP","1","25", "1",0,1,5,0),"ap");
+        \endcode
+        \image html $AliRoot_SRC/doxygen/canvasQA13m2m1h.jpg
+    or column:
+        \code
+            TCanvas * canvasQA = new TCanvas("canvasQA","canvasQA", 1200,800);
+            AliPainter::DivideTPad(canvasQA,"<vertical>[1,3m,2m,1]", "Raw,Error");
+             ...
+        \endcode
+        \image html $AliRoot_SRC/doxygen/canvasQA1321v.jpg
+
+  5. You can specify special flag "m" if you want to join middle pads in column:
+        \code
+            TCanvas * canvasQA = new TCanvas("canvasQA","canvasQA", 1200,800);
+            AliPainter::DivideTPad(canvasQA,"<vertical>[1,3m,2m,1]", "Raw,Error");
+             ...
+        \endcode
+        \image html $AliRoot_SRC/doxygen/canvasQA13m2m1v.jpg
+
+     or row:
+             \code
+            TCanvas * canvasQA = new TCanvas("canvasQA","canvasQA", 1200,800);
+            AliPainter::DivideTPad(canvasQA,"<horizontal>[1,3m,2m,1]", "Raw,Error");
+             ...
+        \endcode
+        \image html $AliRoot_SRC/doxygen/canvasQA13m2m1h.jpg
+
+  6. All previous case set choosen margin equal 0, but you can set your own value in absolute units, now we are supporting
+     only pixel("px" flag) and standart("st" flag) root values (percent from canvas size):
+        \code
+            TCanvas * canvasQA = new TCanvas("canvasQA","canvasQA", 1200,800);
+            AliPainter::DivideTPad(canvasQA,"<horizontal>[1rpx200,1,1,1]", "Raw,Error");
+             ...
+
+            TCanvas * canvasQA = new TCanvas("canvasQA","canvasQA", 1200,800);
+            AliPainter::DivideTPad(canvasQA,"<horizontal>[1rst0.2,1,1,1]", "Raw,Error");
+             ...
+        \endcode
+
+//    TFile*f=new TFile("/Users/bdrum/Projects/alicesw/TPC_trending.root");
+//    TTree*tree=(TTree*)f.Get("trending");
+
+
+
     canvasQA->cd(1);
-    TStatToolkit::DrawMultiGraph(TStatToolkit::MakeMultGraph(tree,"", "meanMIP:run","1","25", "1",1,1,5,0),"ap");
+    TStatToolkit::DrawMultiGraph(TStatToolkit::MakeMultGraph(tree,"", "meanMIPele:run","1","25", "1",1,1,5,0),"ap");
      canvasQA->cd(2);
     TStatToolkit::DrawMultiGraph(TStatToolkit::MakeMultGraph(tree,"", "meanMIPele:run","1","25", "1",1,1,5,0),"ap");
     canvasQA->cd(3);
@@ -64,26 +161,40 @@
     TStatToolkit::DrawMultiGraph(TStatToolkit::MakeMultGraph(tree,"", "meanMIPele:meanMIP","1","25", "1",0,1,5,0),"ap");
     canvasQA->cd(8);
     TStatToolkit::DrawMultiGraph(TStatToolkit::MakeMultGraph(tree,"", "meanMIPele:meanMIP","1","25", "1",0,1,5,0),"ap");
+    canvasQA->cd(9);
+    TStatToolkit::DrawMultiGraph(TStatToolkit::MakeMultGraph(tree,"", "meanMIPele:meanMIP","1","25", "1",0,1,5,0),"ap");
+    canvasQA->cd(10);
+    TStatToolkit::DrawMultiGraph(TStatToolkit::MakeMultGraph(tree,"", "meanMIPele:meanMIP","1","25", "1",0,1,5,0),"ap");
+    canvasQA->cd(11);
+    TStatToolkit::DrawMultiGraph(TStatToolkit::MakeMultGraph(tree,"", "meanMIPele:meanMIP","1","25", "1",0,1,5,0),"ap");
+    canvasQA->cd(12);
+    TStatToolkit::DrawMultiGraph(TStatToolkit::MakeMultGraph(tree,"", "meanMIPele:meanMIP","1","25", "1",0,1,5,0),"ap");
     \endcode
 */
-void AliPainter::DivideTPad(TPad*pad, const char *division) {
-  // divide pads
+void AliPainter::DivideTPad(TPad*pad, const char *division, const char* classID) {
 
-  Int_t    nPads   = 0, nRows = 0;
-  Double_t xl      = 0.0, yl = 0.0, xu = 0.0, yu = 0.0, a = 0.0, b = 0.0;
-  TString  pos     = "";
-  TString  tempStr = "";
-  TString  s       = "";
+  Int_t    nPads    = 0, nRows = 0, maxNCols = 0, n = 0;
+  Double_t xl       = 0.0, yl = 0.0, xu = 0.0, yu = 0.0, a = 0.0, b = 0.0, mValue = 0.0;
+  TString  position = "";
+  TString  tempStr  = "";
+  TString  wMargin  = ""; // margin zero
+  TString  units    = ""; // set margin
 
-  TObjArray *padRows = TString(division).Tokenize("[],");
-  pos = padRows->At(0)->GetName();
+  TObjArray *padRows = TString(division).Tokenize("<>[],");
+  position = padRows->At(0)->GetName();
   nRows = padRows->GetEntries() - 1;
+
+  for (Int_t iRow = 0; iRow < nRows; iRow++)
+    if (maxNCols < TString(padRows->At(iRow + 1)->GetName()).Atoi())
+      maxNCols = TString(padRows->At(iRow + 1)->GetName()).Atoi();
 
   for (Int_t iRow = 0; iRow < nRows; iRow++) {
 
     tempStr = TString(padRows->At(iRow + 1)->GetName());
     Int_t nCols = TString(tempStr(0, 1)).Atoi();
-    s = TString(tempStr(1, 2));
+    wMargin  = TString(tempStr(1, 1));
+    units = TString(tempStr(2, 2));
+    mValue = TString(tempStr(4, tempStr.Length())).Atof();
 
     for (Int_t iCol = 0; iCol < nCols; iCol++) {
       pad->cd();
@@ -92,7 +203,7 @@ void AliPainter::DivideTPad(TPad*pad, const char *division) {
       xu = (iCol + 1) / Double_t(nCols);
       yu = (nRows - iRow) / Double_t(nRows);
 
-      if (pos == "vertical") {
+      if (position == "vertical") {
         a = xl;
         b = yl;
         yl = a;       //yl -> xl
@@ -102,46 +213,74 @@ void AliPainter::DivideTPad(TPad*pad, const char *division) {
         yu = a;       //yu -> xu
         xu = 1 - b;   //xu -> 1 - yu
       }
-
-      TPad *newPad = new TPad(Form("pad%d", nPads), Form("pad%d", nPads), xl, yl, xu, yu);
-
-      if (s == "r") newPad->SetRightMargin(0);
-      if (s == "l") newPad->SetLeftMargin(0);
-      if (s == "t") newPad->SetTopMargin(0);
-      if (s == "b") newPad->SetBottomMargin(0);
-
-      if (pos == "vertical") {
-        if (nCols > 1 && s == "m" && iCol == 0) newPad->SetTopMargin(0);  //top pad in the m
-        if (nCols > 1 && s == "m" && iCol > 0 && (iCol + 1) < nCols) { // middle pads in the m
-          newPad->SetTopMargin(0);
-          newPad->SetBottomMargin(0);
-        }
-        if (nCols > 1 && s == "m" && (iCol + 1) == nCols) newPad->SetBottomMargin(0); //bottom in the m
-        if (s == "m" && nCols == 1) { // only 1 with m
-          newPad->SetLeftMargin(0);
-          newPad->SetRightMargin(0);
-        }
+      TPad *newPad = new TPad(Form("pad[%d].class(%s)", nPads, classID), Form("pad[%d].class(%s)", nPads, classID), xl, yl, xu, yu);
+      if (position == "vertical") {
+        newPad->SetTopMargin(nCols * newPad->GetLeftMargin() / maxNCols);
+        newPad->SetBottomMargin(nCols * newPad->GetRightMargin() / maxNCols);
       }
-      else { //the same for horizontal
-        if (nCols > 1 && s == "m" && iCol == 0) newPad->SetRightMargin(0);
-        if (nCols > 1 && s == "m" && iCol > 0 && (iCol + 1) < nCols) {
-          newPad->SetRightMargin(0);
-          newPad->SetLeftMargin(0);
-        }
-        if (nCols > 1 && s == "m" && (iCol + 1) == nCols) newPad->SetLeftMargin(0);
-        if (s == "m" && nCols == 1) {
-          newPad->SetTopMargin(0);
-          newPad->SetBottomMargin(0);
-        }
+      else {
+        newPad->SetLeftMargin(nCols * newPad->GetLeftMargin() / maxNCols);
+        newPad->SetRightMargin(nCols * newPad->GetRightMargin() / maxNCols);
       }
+      newPad = AliPainter::SetPadMargin(newPad, position, wMargin, units, mValue, iCol, nCols);
       newPad->Draw();
       nPads++;
       newPad->SetNumber(nPads);
     }
   }
 }
+///
+/// \brief Function parse division string from AliPainter::DivideTPad and set attributes.
+/// \param cPad
+/// \param position
+/// \param units
+/// \param value
+TPad *AliPainter::SetPadMargin(TPad *cPad, const char *position, const char *wMargin, const char *units, Double_t mValue, Int_t iCol, Int_t nCols) {
+  Float_t rlValue  = 0.0, btValue = 0.0;
+  if (TString(units) == "px") {
+    rlValue = mValue / cPad->GetWw();
+    btValue = mValue / cPad->GetWh();
+  }
+  else if (TString(units) == "st") {
+    rlValue = mValue;
+    btValue = mValue;
+  }
+  else {
+    rlValue = 0.0;
+    btValue = 0.0;
+  }
 
+  if (TString(wMargin) == "r") cPad->SetRightMargin(rlValue);
+  if (TString(wMargin) == "l") cPad->SetLeftMargin(rlValue);
+  if (TString(wMargin) == "t") cPad->SetTopMargin(btValue);
+  if (TString(wMargin) == "b") cPad->SetBottomMargin(btValue);
 
+  if (TString(position) == "vertical") {
+    if (nCols > 1 && TString(wMargin) == "m" && iCol == 0) cPad->SetTopMargin(btValue);  //top pad in the m
+    if (nCols > 1 && TString(wMargin) == "m" && iCol > 0 && (iCol + 1) < nCols) { // middle pads in the m
+      cPad->SetTopMargin(btValue);
+      cPad->SetBottomMargin(btValue);
+    }
+    if (nCols > 1 && TString(wMargin) == "m" && (iCol + 1) == nCols) cPad->SetBottomMargin(btValue); //bottom in the m
+    if (TString(wMargin) == "m" && nCols == 1) { // only 1 with m
+      cPad->SetLeftMargin(rlValue);
+      cPad->SetRightMargin(rlValue);
+    }
+  }
+  else { //the same for horizontal
+    if (nCols > 1 && TString(wMargin) == "m" && iCol == 0) cPad->SetRightMargin(rlValue);
+    if (nCols > 1 && TString(wMargin) == "m" && iCol > 0 && (iCol + 1) < nCols) {
+      cPad->SetRightMargin(0);
+      cPad->SetLeftMargin(0);
+    }
+    if (nCols > 1 && TString(wMargin) == "m" && (iCol + 1) == nCols) cPad->SetLeftMargin(rlValue);
+    if (TString(wMargin) == "m" && nCols == 1) {
+      cPad->SetTopMargin(btValue);
+      cPad->SetBottomMargin(btValue);
+    }
+  }
+  return cPad;
+}
 ///
 /// \param graph
 /// \param option
@@ -197,16 +336,17 @@ void AliPainter::SetMultiGraphTimeAxis(TMultiGraph *graph, TString option) {
    AliPainter::DrawHistogram("hisK0DMassQPtTgl()(0)()(err)", hisArray, NULL, NULL);
   \endcode
  */
+///axis title, title, entries, description, all info from histogram
 
-TObject* AliPainter::DrawHistogram(char *expression, TObjArray* inputArray, TObjArray *metaData, TObjArray * keepArray){
+TObject* AliPainter::DrawHistogram(char *expression,const TObjArray* histogramArray, TObjArray *metaData, TObjArray * keepArray){
 
   // TString operationType[8]={"f-mean","f-rms","f-ltm","f-ltmsigma","f-gmean","f-grms","f-median","f-gmean"};
-  TString exprsn  = expression;
-  TString hisName = "";
-  TString atts[4] = {"", "", "", ""};
+  TString   exprsn  = expression;
+  TString   hisName = "";
+  TString   atts[4] = {"", "", "", ""};
   TPRegexp          attPat("[(].*?[)]");
-  TString tStr    = "";
-  THn     *his        = NULL;
+  TString   tStr    = "";
+  THn *his    = NULL;
 
   if (exprsn.CountChar('(') != exprsn.CountChar(')')) {
     ::Error("AliPainter::DrawHistogram","check brackets in %s", expression);
@@ -214,7 +354,7 @@ TObject* AliPainter::DrawHistogram(char *expression, TObjArray* inputArray, TObj
   }
 
   hisName = exprsn(0,exprsn.Index("(",0));
-  his     = (THn *) inputArray->FindObject(hisName);;
+  his     = (THn *) histogramArray->FindObject(hisName);
 
   if (his == NULL) {
     ::Info("AliPainter::DrawHistogram", "%s not found", (const char*)hisName);
@@ -244,7 +384,6 @@ TObject* AliPainter::DrawHistogram(char *expression, TObjArray* inputArray, TObj
     his1 = his->Projection(atts[1].Atoi());
     if (SetHistogramRange((TObject *) his1,atts[0]) != NULL) his1 = (TH1 *) SetHistogramRange((TObject *) his1,atts[0]);
     his1->Draw();
-    delete his;
     return (TObject *) his1;
   }
   // TH2
@@ -254,7 +393,6 @@ TObject* AliPainter::DrawHistogram(char *expression, TObjArray* inputArray, TObj
                            TString(atts[1].Tokenize(",")->At(1)->GetName()).Atoi());
     if (SetHistogramRange((TObject *) his2,atts[0]) != NULL) his2 = (TH2 *) SetHistogramRange((TObject *) his2,atts[0]);
     his2->Draw();
-    delete his;
     return (TObject *) his2;
   }
     // TH3
@@ -265,11 +403,9 @@ TObject* AliPainter::DrawHistogram(char *expression, TObjArray* inputArray, TObj
                            TString(atts[1].Tokenize(",")->At(2)->GetName()).Atoi());
     if (SetHistogramRange((TObject *) his3,atts[0]) != NULL) his3 = (TH3 *) SetHistogramRange((TObject *) his3,atts[0]);
     his3->Draw();
-    delete his;
     return (TObject *) his3;
   }
   else if (atts[1].CountChar(',') + 1 > 3) {
-    delete his;
     return (TObject *) his->Projection(atts[1].CountChar(',') + 1);
   }
   else {
