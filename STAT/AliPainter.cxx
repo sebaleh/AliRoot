@@ -42,7 +42,6 @@
 ///                                 - 1lpx30 - means set for pad left margin equal 30pixels
 /// \param classID        - adds classID to name of the pad
 /*!
-
   #### Example use:
 
   1. Let's add some tree with Histogramm:
@@ -284,10 +283,10 @@ TPad *AliPainter::SetPadMargin(TPad *cPad, const char *position, const char *wMa
 ///
 /// \param graph
 /// \param option
-void AliPainter::SetMultiGraphTimeAxis(TMultiGraph *graph, TString option) {
+void AliPainter::SetMultiGraphTimeAxis(TMultiGraph *graph, TString option){
   TAxis *axis = NULL;
-  for (Int_t i = 0; i < graph->GetListOfGraphs()->GetEntries(); i++) {
-    TGraph *cGraph = (TGraph *) graph->GetListOfGraphs()->At(i);
+  for (Int_t i=0; i<graph->GetListOfGraphs()->GetEntries(); i++) {
+    TGraph *cGraph=(TGraph *) graph->GetListOfGraphs()->At(i);
     if (option.Contains("X")) axis = cGraph->GetXaxis();
     if (option.Contains("Y")) axis = cGraph->GetYaxis();
     if (axis) {
