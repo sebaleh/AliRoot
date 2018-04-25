@@ -473,7 +473,7 @@ TTree* AliExternalInfo::GetTree(TString type, TString period, TString pass, Int_
   TTreeSRedirector::FixLeafNameBug(tree);
   if (tree != 0x0) {
     if (fVerbose>1) AliInfo(TString::Format("Successfully read %s/%s",internalFilename.Data(), tree->GetName()));
-    if (buildIndex==1) BuildIndex(tree, type);
+//    if (buildIndex==1) BuildIndex(tree, type);   
   } else {
     AliError("Error while reading tree: ");
     AliError(TString::Format("ERROR READING: %s", treeName.Data()));
@@ -563,7 +563,7 @@ TTree*  AliExternalInfo::GetTree(TString type, TString period, TString pass, TSt
     if (nDots==2){
       tree->SetAlias(conditionName.Data(),"(1+0)");    
       ftree->SetAlias(conditionName.Data(),condition.Data());
-      ftree->BuildIndex(tree->GetTreeIndex()->GetMajorName(), conditionName.Data());    
+//      ftree->BuildIndex(tree->GetTreeIndex()->GetMajorName(), conditionName.Data());    
       tree->AddFriend(ftree, (fname+"_"+conditionName).Data());
     }else{
       tree->AddFriend(ftree, fname.Data());
